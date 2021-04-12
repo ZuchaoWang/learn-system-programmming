@@ -12,8 +12,19 @@ struct msg_buffer {
 };
 
 int get_msgid() {
-  key_t key = ftok("msqqueue", 65);
-  return msgget(key, 0666 | IPC_CREAT);
+  key_t key;
+  if((key = ftok("./msgqueue.c", 65)) == -1) {
+    perror("ftok");
+    exit(EXIT_FAILURE);
+  }
+
+  int id;
+  if ((id = msgget(key, 0666 | IPC_CREAT)) == -1) {
+    perror("msgget");
+    exit(EXIT_FAILURE);
+  }
+
+  return id;
 }
 
 void run_sender() {
@@ -22,14 +33,15 @@ void run_sender() {
 
   struct msg_buffer msg;
   msg.type = 1;
+  sprintf(msg.content, "%s", "hello world!");
 
-  printf("please write data to send:\n");
+  printf("message sent: %s\n", msg.content);
   fflush(stdout);
-  fgets(msg.content, BUFSIZ, stdin);
 
-  msgsnd(msgid, &msg, sizeof(msg), 0);
-
-  exit(EXIT_SUCCESS);
+  if (msgsnd(msgid, &msg, sizeof(msg), 0) == -1) {
+    perror("msgsnd");
+    exit(EXIT_FAILURE);
+  }
 }
 
 void run_receiver() {
@@ -39,15 +51,18 @@ void run_receiver() {
   struct msg_buffer msg;
   msg.type = 1;
 
-  msgrcv(msgid, &msg, sizeof(msg), 1, 0);
+  if (msgrcv(msgid, &msg, sizeof(msg), 1, 0) == -1) {
+    perror("msgrcv");
+    exit(EXIT_FAILURE);
+  }
 
-  printf("message received:\n");
-  printf("%s", msg.content);
+  printf("message received: %s\n", msg.content);
   fflush(stdout);
 
-  msgctl(msgid, IPC_RMID, NULL);
-
-  exit(EXIT_SUCCESS);
+  if (msgctl(msgid, IPC_RMID, NULL) == -1) {
+    perror("msgctl");
+    exit(EXIT_FAILURE);
+  }
 }
 
 int main()
@@ -61,6 +76,7 @@ int main()
     exit(EXIT_FAILURE);
   } else if (cpid1 == 0) {
     run_sender();
+    exit(EXIT_SUCCESS);
   }
 
   // wait for child1 to finish
@@ -76,6 +92,7 @@ int main()
     exit(EXIT_FAILURE);
   } else if (cpid2 == 0) {
     run_receiver();
+    exit(EXIT_SUCCESS);
   }
 
   // wait for child2 to finish
