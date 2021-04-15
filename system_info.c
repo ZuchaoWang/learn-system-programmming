@@ -7,10 +7,9 @@ int main()
 {
   struct utsname buf;
 
-  errno = 0;
   if (uname(&buf) != 0)
   {
-    perror("uname error: ");
+    perror("uname");
     exit(EXIT_FAILURE);
   }
 
@@ -19,4 +18,6 @@ int main()
   printf("release = %s\n", buf.release);
   printf("version = %s\n", buf.version);
   printf("machine = %s\n", buf.machine);
+
+  return EXIT_SUCCESS;
 }
