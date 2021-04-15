@@ -69,7 +69,7 @@ int main()
 {
   int status;
 
-  // fork child1 to send
+  // fork sender
   int cpid1 = fork();
   if (cpid1 == -1) {
     perror("fork sender");
@@ -79,13 +79,13 @@ int main()
     exit(EXIT_SUCCESS);
   }
 
-  // wait for child1 to finish
+  // wait for sender to finish
   if (waitpid(cpid1, &status, 0) == -1) {
     perror("waitpid for sender");
     exit(EXIT_FAILURE);
   }
 
-  // fork child2 to receive
+  // fork receiver
   int cpid2 = fork();
   if (cpid2 == -1) {
     perror("fork receiver");
@@ -95,7 +95,7 @@ int main()
     exit(EXIT_SUCCESS);
   }
 
-  // wait for child2 to finish
+  // wait for receiver to finish
   if (waitpid(cpid2, &status, 0) == -1) {
     perror("waitpid for receiver");
     exit(EXIT_FAILURE);

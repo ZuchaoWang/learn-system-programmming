@@ -1,8 +1,15 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
+
+void perror_exit(char *msg)
+{
+  perror(msg);
+  exit(EXIT_FAILURE);
+}
 
 int main()
 {
@@ -11,36 +18,31 @@ int main()
   int rf, wf;
 
   if (mkfifo(fn, S_IRWXU) != 0)
-  {
-    perror("mkfifo error");
-  }
+    perror_exit("mkfifo error");
 
+  // nonblocking open read end to avoid deadlock
   if ((rf = open(fn, O_RDONLY | O_NONBLOCK)) < 0)
-  {
-    perror("open error on read end");
-  }
+    perror_exit("open error on read end");
 
+  // no need to nonblocking open write end
   if ((wf = open(fn, O_WRONLY)) < 0)
-  {
-    perror("open error on write end");
-  }
+    perror_exit("open error on write end");
 
   if (write(wf, out, strlen(out) + 1) < 0)
-  {
-    perror("write");
-  }
+    perror_exit("write");
 
   if (read(rf, in, sizeof(in)) < 0)
-  {
-    perror("read");
-  }
+    perror_exit("read");
 
-  printf("reading '%s' from FIFIO\n", in);
+  printf("read '%s' from FIFIO\n", in);
 
-  close(wf);
-  close(rf);
+  if (close(rf) == -1)
+    perror_exit("close read end");
+  if (close(wf) == -1)
+    perror_exit("close write end");
 
-  unlink(fn);
+  if (unlink(fn) == -1)
+    perror_exit("unlink");
 
   return 0;
 }

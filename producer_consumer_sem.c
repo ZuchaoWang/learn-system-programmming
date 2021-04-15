@@ -264,7 +264,7 @@ int main()
     exit(EXIT_SUCCESS);
   }
 
-  // fork child2 to consumer
+  // fork consumer
   int cpid2 = fork();
   if (cpid2 == -1)
   {
