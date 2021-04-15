@@ -1,46 +1,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
+#include <fcntl.h>
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static void daemonhandler()
+void perror_exit(char *msg)
+{
+  perror(msg); // this cannot really print anything because stderr connect to /dev/null
+  exit(EXIT_FAILURE);
+}
+
+void become_daemon()
 {
   pid_t pid;
   pid = fork();
-  if (pid < 0) exit(EXIT_FAILURE);
-  if (pid > 0) exit(EXIT_SUCCESS);
+  if (pid == -1)
+    perror_exit("fork 1");
+  else if (pid > 0)
+    exit(EXIT_SUCCESS);
 
-  if (setsid() < 0) exit(EXIT_FAILURE);
-  signal(SIGCHLD, SIG_IGN);
-  signal(SIGHUP, SIG_IGN);
+  if (setsid() == -1)
+    perror_exit("setsid");
 
   pid = fork();
-  if (pid < 0) exit(EXIT_FAILURE);
-  if (pid > 0) exit(EXIT_SUCCESS);
+  if (pid == -1)
+    perror_exit("fork 2");
+  else if (pid > 0)
+    exit(EXIT_SUCCESS);
 
   umask(0);
   chdir("/");
 
-  int x;
-  for (x = sysconf(_SC_OPEN_MAX); x >= 0; x--)
+  int fd;
+  for (fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--)
   {
-    close(x);
+    close(fd);
   }
 
-  openlog("daemons", LOG_PID, LOG_DAEMON);
+  fd = open("/dev/null", O_RDWR);
+  if (dup2(fd, STDIN_FILENO) != STDIN_FILENO)
+    perror_exit("dup2 in");
+  if (dup2(fd, STDOUT_FILENO) != STDOUT_FILENO)
+    perror_exit("dup2 out");
+  if (dup2(fd, STDERR_FILENO) != STDERR_FILENO)
+    perror_exit("dup2 err");
+  close(fd);
 }
 
 int main()
 {
-  daemonhandler();
+  become_daemon();
 
-  syslog(LOG_NOTICE, "daemon has started");
   sleep(20);
-  syslog(LOG_NOTICE, "daemon has terminated");
-  closelog();
-  
+
   return EXIT_SUCCESS;
 }
+
+// use "ps -Af | grep a.out" to find the daemon, assuming compiled executable is named "a.out"
