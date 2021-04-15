@@ -32,6 +32,9 @@ void *run_producer(void *vargp)
 {
   static unsigned int seed = 0;
 
+  printf("%s", "[P]");
+  fflush(stdout);
+
   int i, len;
   char msg[] = MESSAGE, c;
   len = strlen(msg);
@@ -71,6 +74,9 @@ void *run_producer(void *vargp)
 void *run_consumer(void *vargp)
 {
   static unsigned int seed = 1;
+
+  printf("%s", "[C]");
+  fflush(stdout);
 
   char c;
   while (1)
