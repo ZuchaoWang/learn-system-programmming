@@ -20,6 +20,6 @@ int main()
   t1 = time(NULL);
   double cdur = ((double)(c1 - c0)) / CLOCKS_PER_SEC;
   double tdur = t1 - t0;
-  printf("the clock time is %fs\n", cdur);
-  printf("the elapsed time is %fs\n", tdur);
+  printf("the cpu clock time (user + sys) is %fs\n", cdur);
+  printf("the elapsed real time is %fs\n", tdur);
 }
