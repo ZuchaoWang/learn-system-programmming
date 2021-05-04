@@ -7,7 +7,7 @@ void f(void)
 {
   int a[4];
   int *b = malloc(16);
-  int *c;
+  int *c = NULL;
   int i;
 
   printf("1: a = %p, b = %p, c = %p\n", a, b, c);
